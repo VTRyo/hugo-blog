@@ -1,0 +1,24 @@
+dependencies:
+  override:
+    # Hugoのバイナリを取得
+    - Wget https://github.com/gohugoio/hugo/releases/download/v0.31.1/hugo_0.31.1_Linux-64bit.deb
+    # Hugoをインストール
+    - sudo dpkg -i hugo_0.31.1_Linux-64bit.deb
+    # AWS コマンドラインインターフェイスのインストール
+    - pip install awscli
+    # AWS CLIでCloudfrontの扱いを有効に
+    - aws configure set preview.cloudfront true
+
+test:
+  override:
+    # 静的サイトを生成。
+    - hugo
+
+deployment:
+    production:
+      branch: master
+      commands:
+        # 生成した静的サイトをS3に同期
+        - aws s3 sync --exact-timestamps public/ s3://blog.nijohando.jp/ --delete
+        # CloudFrontのキャッシュをクリア
+        - aws cloudfront create-invalidation --distribution-id --paths '/*'
